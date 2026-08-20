@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FLO CRM Analytics Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f1117; color: #fff; }
+  header { background: linear-gradient(135deg, #1D3557, #457B9D); padding: 28px 40px; }
+  header h1 { font-size: 24px; font-weight: 700; }
+  header p  { font-size: 13px; color: #A8DADC; margin-top: 4px; }
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 24px 40px 0; }
+  .kpi { background: #1e2130; border-radius: 12px; padding: 20px 24px; border-left: 4px solid; }
+  .kpi:nth-child(1) { border-color: #457B9D; }
+  .kpi:nth-child(2) { border-color: #2A9D8F; }
+  .kpi:nth-child(3) { border-color: #E63946; }
+  .kpi:nth-child(4) { border-color: #F4A261; }
+  .kpi .label { font-size: 12px; color: #8b93a7; text-transform: uppercase; letter-spacing: 1px; }
+  .kpi .value { font-size: 32px; font-weight: 700; margin-top: 6px; }
+  .kpi .sub   { font-size: 12px; color: #8b93a7; margin-top: 4px; }
+  .tabs { display: flex; gap: 0; padding: 24px 40px 0; }
+  .tab { padding: 10px 24px; cursor: pointer; font-size: 14px; font-weight: 500; border-radius: 8px 8px 0 0; border: 1px solid #2a2f45; border-bottom: none; background: #1a1f2e; color: #8b93a7; }
+  .tab.active { background: #1e2130; color: #fff; }
+  .tab-content { display: none; padding: 0 40px 40px; }
+  .tab-content.active { display: block; }
+  .panel { background: #1e2130; border-radius: 0 12px 12px 12px; padding: 28px; margin-bottom: 20px; }
+  .panel h2 { font-size: 16px; font-weight: 600; margin-bottom: 20px; color: #A8DADC; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  canvas { max-height: 280px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
+  th { background: #2a2f45; padding: 10px 14px; text-align: left; color: #A8DADC; font-weight: 600; }
+  td { padding: 10px 14px; border-bottom: 1px solid #2a2f45; }
+  tr:hover td { background: #252a3a; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge-red    { background: #3d1a1d; color: #E63946; }
+  .badge-green  { background: #1a2e2b; color: #2A9D8F; }
+  .badge-blue   { background: #1a2233; color: #457B9D; }
+  .badge-orange { background: #2e2218; color: #F4A261; }
+  .insight { background: #252a3a; border-left: 3px solid #2A9D8F; border-radius: 0 8px 8px 0; padding: 14px 18px; margin-top: 16px; font-size: 13px; line-height: 1.6; color: #c8cdd8; }
+  .insight strong { color: #fff; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1> FLO CRM Analytics Dashboard</h1>
+  <p>Customer Segmentation · Churn Prediction · CLTV Forecasting &nbsp;|&nbsp; Nehir Ceylan · August 2026</p>
+</header>
+
+<div class="kpi-row">
+  <div class="kpi"><div class="label">Total Customers</div><div class="value">19,945</div><div class="sub">Omnichannel FLO customers</div></div>
+  <div class="kpi"><div class="label">Avg CLTV (6 Months)</div><div class="value">157.77 TL</div><div class="sub">BG-NBD + Gamma-Gamma model</div></div>
+  <div class="kpi"><div class="label">Churn Rate</div><div class="value">32.6%</div><div class="sub">180-day inactivity threshold</div></div>
+  <div class="kpi"><div class="label">High Risk Customers</div><div class="value">472</div><div class="sub">Churn probability > 60%</div></div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('segmentation',this)"> Segmentation</div>
+  <div class="tab" onclick="showTab('churn',this)"> Churn Risk</div>
+  <div class="tab" onclick="showTab('cltv',this)"> CLTV</div>
+  <div class="tab" onclick="showTab('insights',this)"> CRM Strategy</div>
+</div>
+
+<div id="segmentation" class="tab-content active">
+  <div class="panel">
+    <div class="grid-2">
+      <div><h2>RFM Segments</h2><canvas id="rfmChart"></canvas></div>
+      <div><h2>K-Means Segments (K=4)</h2><canvas id="kmeansChart"></canvas></div>
+    </div>
+    <div class="insight"><strong>Key Finding:</strong> Hibernating (3,604) and At Risk (3,131) customers represent 34% of the base, a critical CRM priority. Champions (1,932) and Loyal Customers (3,361) form a strong retention core of 26%.</div>
+  </div>
+  <div class="panel">
+    <h2>Segment Profile</h2>
+    <table>
+      <tr><th>Segment</th><th>Customers</th><th>Avg Recency</th><th>Avg Frequency</th><th>Avg Monetary</th><th>Priority</th></tr>
+      <tr><td>Champions</td><td>1,932</td><td>18 days</td><td>9.2</td><td>1,305 TL</td><td><span class="badge badge-green">Retain</span></td></tr>
+      <tr><td>Loyal Customers</td><td>3,361</td><td>35 days</td><td>5.8</td><td>842 TL</td><td><span class="badge badge-green">Reward</span></td></tr>
+      <tr><td>Potential Loyalists</td><td>2,938</td><td>22 days</td><td>3.1</td><td>512 TL</td><td><span class="badge badge-blue">Upsell</span></td></tr>
+      <tr><td>At Risk</td><td>3,131</td><td>142 days</td><td>4.6</td><td>718 TL</td><td><span class="badge badge-red">Win-back</span></td></tr>
+      <tr><td>Cannot Lose Them</td><td>1,200</td><td>167 days</td><td>8.1</td><td>1,102 TL</td><td><span class="badge badge-red">Urgent</span></td></tr>
+      <tr><td>Hibernating</td><td>3,604</td><td>218 days</td><td>2.8</td><td>389 TL</td><td><span class="badge badge-red">Reactivate</span></td></tr>
+      <tr><td>New Customers</td><td>680</td><td>12 days</td><td>1.0</td><td>245 TL</td><td><span class="badge badge-blue">Onboard</span></td></tr>
+    </table>
+  </div>
+</div>
+
+<div id="churn" class="tab-content">
+  <div class="panel">
+    <div class="grid-2">
+      <div><h2>Churn Risk Distribution</h2><canvas id="churnPieChart"></canvas></div>
+      <div>
+        <h2>Model Comparison — AUC Score</h2>
+        <canvas id="aucChart"></canvas>
+        <div class="insight"><strong>AUC: 0.7219</strong> — Gradient Boosting outperformed Logistic Regression (0.65) and Random Forest (0.67). Top predictors: customer_lifetime_days (0.32) and num_categories (0.29).</div>
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Feature Importance — Gradient Boosting</h2>
+    <canvas id="featureChart"></canvas>
+    <div class="insight"><strong>Actionable Insight:</strong> Customers who shop across multiple categories churn significantly less. A cross-sell campaign targeting single-category customers (e.g. AKTIFSPOR-only) could meaningfully reduce churn risk.</div>
+  </div>
+</div>
+
+<div id="cltv" class="tab-content">
+  <div class="panel">
+    <div class="grid-2">
+      <div><h2>Avg CLTV by Segment (TL)</h2><canvas id="cltvBarChart"></canvas></div>
+      <div>
+        <h2>Priority Matrix: CLTV × Churn Risk</h2>
+        <table>
+          <tr><th>CLTV</th><th>Churn Risk</th><th>Customers</th><th>Avg CLTV</th><th>Action</th></tr>
+          <tr><td>Platinum</td><td><span class="badge badge-red">High Risk</span></td><td>24</td><td>305 TL</td><td><span class="badge badge-red"> Urgent</span></td></tr>
+          <tr><td>Gold</td><td><span class="badge badge-red">High Risk</span></td><td>23</td><td>157 TL</td><td><span class="badge badge-red">Priority</span></td></tr>
+          <tr><td>Platinum</td><td><span class="badge badge-orange">Medium Risk</span></td><td>1,265</td><td>266 TL</td><td><span class="badge badge-orange">Monitor</span></td></tr>
+          <tr><td>Platinum</td><td><span class="badge badge-green">Low Risk</span></td><td>3,697</td><td>316 TL</td><td><span class="badge badge-green">Reward</span></td></tr>
+          <tr><td>Bronze</td><td><span class="badge badge-red">High Risk</span></td><td>396</td><td>41 TL</td><td><span class="badge badge-blue">Low Priority</span></td></tr>
+        </table>
+        <div class="insight"><strong>24 critical customers</strong> (Platinum + High Risk) represent ~7,300 TL immediate revenue risk. Personalized win-back for this micro-segment has the highest ROI.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="insights" class="tab-content">
+  <div class="panel">
+    <h2>CRM Action Plan by Segment</h2>
+    <table>
+      <tr><th>Segment</th><th>Size</th><th>Goal</th><th>Recommended Action</th><th>Channel</th></tr>
+      <tr><td><strong>Champions</strong></td><td>1,932</td><td>Retain & Advocate</td><td>Early access to new collections, VIP loyalty program</td><td>App + Email</td></tr>
+      <tr><td><strong>Cannot Lose Them</strong></td><td>1,200</td><td>Win-back urgently</td><td>Personalized "We miss you" + 20% discount on last category</td><td>SMS + Email</td></tr>
+      <tr><td><strong>At Risk</strong></td><td>3,131</td><td>Re-engage</td><td>Time-limited reactivation offer</td><td>Email + Retargeting</td></tr>
+      <tr><td><strong>Potential Loyalists</strong></td><td>2,938</td><td>Increase frequency</td><td>Cross-sell to new categories, loyalty points multiplier</td><td>App + In-store</td></tr>
+      <tr><td><strong>Hibernating</strong></td><td>3,604</td><td>Reactivate</td><td>Low-cost mass email with best-seller highlights</td><td>Email only</td></tr>
+      <tr><td><strong>New Customers</strong></td><td>680</td><td>Convert to loyal</td><td>Onboarding series, second-purchase incentive</td><td>App + Email</td></tr>
+    </table>
+  </div>
+  <div class="panel">
+    <h2>Key Findings</h2>
+    <div class="grid-3">
+      <div class="insight"><strong> Omnichannel Dominance</strong><br>84.5% of customers shop both online and offline. CRM strategy must treat channels as complementary, not competing.</div>
+      <div class="insight"><strong> iOS = Higher Value</strong><br>iOS users spend avg 165 TL/order vs 143 TL for Mobile. Premium campaigns work better than discounts for this segment.</div>
+      <div class="insight"><strong> AKTIFSPOR Leads</strong><br>46% of customers shopped AKTIFSPOR last 12 months. Cross-selling to KADIN/ERKEK is the top growth lever.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const C = { red:'#E63946', teal:'#2A9D8F', blue:'#457B9D', orange:'#F4A261' };
+const gridColor = '#2a2f45';
+
+new Chart(document.getElementById('rfmChart'), {
+  type:'bar',
+  data:{ labels:['Hibernating','Loyal Customers','At Risk','Potential Loyalists','Champions','About to Sleep','Cannot Lose Them','Need Attention','New Customers','Promising'], datasets:[{ data:[3604,3361,3131,2938,1932,1629,1200,823,680,647], backgroundColor:[C.red,C.teal,C.red,C.blue,C.teal,C.orange,C.red,C.orange,C.blue,C.blue] }] },
+  options:{ indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{grid:{color:gridColor}},y:{grid:{color:gridColor}}} }
+});
+
+new Chart(document.getElementById('kmeansChart'), {
+  type:'doughnut',
+  data:{ labels:['Potential Loyalists','At Risk','Loyal Customers','Champions'], datasets:[{ data:[9071,6147,3845,882], backgroundColor:[C.blue,C.red,C.teal,C.orange], borderWidth:0 }] },
+  options:{ plugins:{ legend:{ position:'bottom', labels:{color:'#fff'} } } }
+});
+
+new Chart(document.getElementById('churnPieChart'), {
+  type:'pie',
+  data:{ labels:['Low Risk (41%)','Medium Risk (56.6%)','High Risk (2.4%)'], datasets:[{ data:[8176,11297,472], backgroundColor:[C.teal,C.orange,C.red], borderWidth:0 }] },
+  options:{ plugins:{ legend:{ position:'bottom', labels:{color:'#fff'} } } }
+});
+
+new Chart(document.getElementById('aucChart'), {
+  type:'bar',
+  data:{ labels:['Logistic Regression','Random Forest','Gradient Boosting'], datasets:[{ label:'AUC', data:[0.6505,0.6678,0.7219], backgroundColor:[C.blue,C.blue,C.teal] }] },
+  options:{ plugins:{legend:{display:false}}, scales:{y:{min:0.6,max:0.75,grid:{color:gridColor}},x:{grid:{color:gridColor}}} }
+});
+
+new Chart(document.getElementById('featureChart'), {
+  type:'bar',
+  data:{ labels:['customer_lifetime_days','num_categories','frequency','monetary','avg_order_value','cat_erkek','cat_cocuk','online_ratio','cat_aktifspor','cat_aktifcocuk','cat_kadin'], datasets:[{ data:[0.319,0.291,0.154,0.128,0.044,0.021,0.018,0.007,0.006,0.006,0.005], backgroundColor:C.teal }] },
+  options:{ indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{grid:{color:gridColor}},y:{grid:{color:gridColor}}} }
+});
+
+new Chart(document.getElementById('cltvBarChart'), {
+  type:'bar',
+  data:{ labels:['Bronze','Silver','Gold','Platinum'], datasets:[{ label:'Avg CLTV (TL)', data:[60.05,107.23,160.39,303.43], backgroundColor:[C.blue,C.blue,C.teal,C.orange] }] },
+  options:{ plugins:{legend:{display:false}}, scales:{y:{grid:{color:gridColor}},x:{grid:{color:gridColor}}} }
+});
+
+function showTab(id, el) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>
